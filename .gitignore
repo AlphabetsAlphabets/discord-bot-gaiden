@@ -1,7 +1,4 @@
-main.py
+.venv
 channels.txt
 tokens.txt
-Procfile
-pyvenv.cfg
-testing.py
-.venv
+main.py
