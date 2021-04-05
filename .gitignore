@@ -1,5 +1,1 @@
-.venv
-channels.txt
-tokens.txt
-main.py
-Procfile
+token.txt
