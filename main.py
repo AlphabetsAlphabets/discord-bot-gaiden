@@ -4,7 +4,8 @@ import discord
 from discord.ext import commands
 
 import cogs
-from cogs.hello import MessageHandler
+from cogs.MessageHandler import MessageHandler
+from cogs.Engine import Engine
 
 prefix = "<"
 bot = commands.Bot(command_prefix=prefix)
@@ -27,9 +28,20 @@ async def say(ctx, *args):
 
     await ctx.send(words)
 
+@bot.command()
+async def test(ctx):
+    embed = discord.Embed(
+        title = "Title",
+        description = "Description"
+    )
+
+    await ctx.send(embed=embed)
+    
+
 with open("token.txt") as f:
     token = f.readline()
 
 if __name__ == "__main__":
     bot.add_cog(MessageHandler(bot))
+    bot.add_cog(Engine(bot))
     bot.run(token)
