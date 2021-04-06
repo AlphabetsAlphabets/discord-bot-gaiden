@@ -1,49 +1,35 @@
-import discord
 import time
+
+import discord
 from discord.ext import commands
 
+import cogs
+from cogs.hello import MessageHandler
 
-class Gaiden(discord.Client):
-    def __init__(self):
-        self.prefix = "g."
-        self.bot = commands.Bot(command_prefix=self.prefix)
-        super().__init__()
+prefix = "<"
+bot = commands.Bot(command_prefix=prefix)
 
-    async def on_ready(self):
-        t0 = time.time()
-        print("Gaiden is online!")
-        t1 = time.time()
-        print(f"Gaiden took {t0-t1}s to startup.")
+@bot.event
+async def on_ready():
+    t0 = time.time()
+    print("Gaiden is online!")
+    t1 = time.time()
+    print(f"Gaiden took {t0-t1}s to startup.")
 
-    async def on_message(self, message):
-        if message.author == self.user:
-            return
+@bot.command()
+async def ping(ctx):
+    await ctx.send("Pong!")
 
-        invoke = message.content
+@bot.command()
+async def say(ctx, *args):
+    words = list(args)
+    words = " ".join(words) + "."
 
-        if invoke.startswith("reply"):
-            if message.author.display_name != "Dex":
-                await message.reply("lol fuck off.")
-                return
-
-            # Sending message to the channel
-            # await message.channel.send(f"You wrote {content}")
-
-            # Sending a reply to the user
-            await message.reply("replied")
-
-        if invoke.startswith("channels"):
-            print("Someone said 'channels'")
-            # channels = self.get_all_channels()
-            for channel in self.get_all_channels():
-                perms = message.author.permissions_in(channel)
-                print(perms)
-                print(type(perms))
-
+    await ctx.send(words)
 
 with open("token.txt") as f:
     token = f.readline()
 
-
-gaiden = Gaiden()
-gaiden.run(token)
+if __name__ == "__main__":
+    bot.add_cog(MessageHandler(bot))
+    bot.run(token)
