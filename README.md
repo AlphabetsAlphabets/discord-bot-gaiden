@@ -1,6 +1,7 @@
 # Discord bot gaiden
 Just a little personal project that I wanted to make. And I've always wanted to make a discord bot.
 
+# Motivation
 
 # TODO
 - `:white_check_mark:` :white_check_mark:  

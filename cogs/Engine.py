@@ -36,6 +36,10 @@ class Engine(commands.Cog):
         if barrier > len(data):
             data = data[:barrier]
 
+        # I only want results with the "Text" key in them
+
+        map(remove_text, data))
+
         results = []
         for result in data:
             for key in result.keys():
@@ -59,3 +63,9 @@ class Engine(commands.Cog):
  
         # Emoji detection
         await ctx.send(embed=embed)
+
+    @staticmethod
+    def remove_text(data: dict):
+        value, key = data.items()
+        if "Text" in key:
+            return data
