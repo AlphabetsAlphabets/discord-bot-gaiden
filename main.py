@@ -6,6 +6,7 @@ from discord.ext import commands
 import cogs
 from cogs.MessageHandler import MessageHandler
 from cogs.Engine import Engine
+from cogs.FeatureTests import FeatureTests
 
 prefix = "<"
 bot = commands.Bot(command_prefix=prefix)
@@ -21,27 +22,14 @@ async def on_ready():
 async def ping(ctx):
     await ctx.send("Pong!")
 
-@bot.command()
-async def say(ctx, *args):
-    words = list(args)
-    words = " ".join(words) + "."
-
-    await ctx.send(words)
-
-@bot.command()
-async def test(ctx):
-    embed = discord.Embed(
-        title = "Title",
-        description = "Description"
-    )
-
-    await ctx.send(embed=embed)
-    
-
 with open("token.txt") as f:
     token = f.readline()
 
 if __name__ == "__main__":
+    # Adding cogs
     bot.add_cog(MessageHandler(bot))
     bot.add_cog(Engine(bot))
+    bot.add_cog(FeatureTests(bot))
+
+    # running the bot
     bot.run(token)
