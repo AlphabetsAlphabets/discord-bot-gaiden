@@ -10,44 +10,74 @@ class Engine(commands.Cog):
         self._last_member = None
         self.emojis = ["◀️", "➡️", "✅"]
 
-    def structure_embed(self, embed: discord.Embed, result: List[dict], stop: int):
-        for count, result in enumerate(results[:stop], start = 1):
-            desc = result["Text"]
-            url = result["FirstURL"]
+    async def next_page(self, message: discord.Message, embed: discord.Embed):
+        channel = message.channel
+        await message.delete()
 
-            # Setting up the output text
-            return_result = f"{desc}\nFor more information checkout the [source]({url})\n"
-            embed.add_field(value=return_result, inline=False)
+        secondary_page = self.search_pages["secondary page"]
+        message = await channel.send(embed=secondary_page)
 
-        return embed
+        prev_arrow = self.emojis[0]
+        done = self.emojis[2]
 
-    async def search(self, message: discord.Message):
-        reactions = message.reactions
+        await message.add_reaction(prev_arrow)
+        await message.add_reaction(done)
 
+    async def previous_page(self, message: discord.Message, embed: discord.Embed):
+        channel = message.channel
+        await message.delete()
+
+        front_page = self.search_pages["front page"]
+        message = await channel.send(embed=front_page)
+
+        next_arrow = self.emojis[1]
+        done = self.emojis[2]
+
+        await message.add_reaction(next_arrow)
+        await message.add_reaction(done)
+
+    def embed_type(self, embed: discord.Embed) -> str: 
+        if "search result" in embed.title.lower():
+            return "search result"
+
+    async def navigation(self, message: discord.Message):
+        """message: The embed"""
+
+        reactions = message.reactions 
         # The bot adds it's own reactions which also triggers this function.
         # This is to prevent an IndexError
-        if len(reactions) >= 3:
-            view_previous = reactions[0]
-            view_next = reactions[1]
-            done = reactions[2]
+        embeds = message.embeds
 
-            if view_next.count == 2:
-                channel = message.channel
-                await message.delete()
+        variant = ""
+        relevant_embed = ""
+        for embed in embeds:
+            variant = self.embed_type(embed)
+            relevant_embed = embed
+            break
 
-                mid_page = self.search_pages["mid_embed"]
-                await channel.send(embed=mid_page)
 
-            if view_previous.count == 2:
-                author = message.author
-                channel = message.channel
+        channel = message.channel 
+        if variant == "search result":
+            for reaction in reactions:
+                count = reaction.count
+                if count < 2:
+                    continue
 
-                await message.delete()
+                emoji = reaction.emoji
 
-                await channel.send(embed=embed)
+                # left
+                if emoji == self.emojis[0]:
+                    await self.previous_page(message, relevant_embed)
 
-            if done.count == 2:
-                await message.delete()
+                # right
+                if emoji == self.emojis[1]:
+                    await self.next_page(message, relevant_embed)
+
+                # remove
+                if emoji == self.emojis[2]:
+                    # Where `done` is the check mark emoji if there is 2 or more of them,
+                    # it'll delete the message because, well the person has finished looking at them.
+                    await message.delete()
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -58,9 +88,9 @@ class Engine(commands.Cog):
         message = await channel.fetch_message(message_id)
         embeds = message.embeds
         if len(embeds) != 0:
-            title = embeds[0].title
-            if "search" in title.lower():
-                await self.search(message)
+            title = embeds[0].title.lower()
+            if "search" in title or "second page" in title:
+                await self.navigation(message)
 
 
     @commands.command(name='search')
@@ -85,16 +115,10 @@ class Engine(commands.Cog):
 
         self.search_pages = dict()
 
-        abstract_desc = data["Abstract"]
-        if abstract_desc != "":
-            embed_desc = abstract_desc
-
-            front_embed = discord.Embed(
-                    title = f"{author}'s search result(s) for '{search_query}'",
-                    description=embed_desc
-            )
-
-            search_results.append(font_embed)
+        front_page = discord.Embed(
+                title = f"{author}'s search result for '{search_query}'",
+                description = data["Abstract"]
+        )
 
         data = data["RelatedTopics"][:10]
 
@@ -102,23 +126,42 @@ class Engine(commands.Cog):
         results = []
         for result in data:
             for key in result.keys():
-                if "Text" not in key:
+                if "Text" not in key and "Abstract" not in key:
                     continue
 
                 results.append(result)
         
+        # create the embed from the results taken by the API response of ddg's instant answer api
+        midpoint = round(len(results) / 2)
+        front_page = self.format_embed(results[:midpoint], front_page)
 
-        mid_embed = discord.Embed(title = "Page two")
+        self.search_pages["front page"] = front_page
 
-        final_embed = discord.Embed(title = "Page three")
+        secondary_page = discord.Embed(title = "Search result: second page")
+        secondary_page = self.format_embed(results[midpoint:], secondary_page)
+        self.search_pages["secondary page"] = secondary_page
 
-        midpoint = len(results)
-        mid_embed = self.structure_embed(mid_embed, results, midpoint)
-        final_embed = self.structure_embed(final_embed, results, len(results) - midpoint)
 
-        self.search_pages["mid_embed"] = mid_embed
-        self.search_pages["final_embed"] = final_embed
+        message = await ctx.send(embed=front_page)
 
-        message = await ctx.send(embed=embed)
-        for emoji in self.emojis:
-            await message.add_reaction(emoji)
+        next_arrow = self.emojis[1]
+        done = self.emojis[2]
+
+        await message.add_reaction(next_arrow)
+        await message.add_reaction(done)
+
+    def format_embed(self, results: List[dict], embed: discord.Embed) -> discord.Embed:
+        """
+        Populates the embed with information from the DDG api
+
+        results: An array of JSON response of the api
+        embed: The discord embed
+        """
+        for result in results:
+            desc = result["Text"]
+            url = result["FirstURL"]
+
+            return_result = f"{desc}\nFor more information checkout the [source]({url})\n"
+            embed.add_field(name="==="*10, value=return_result, inline=False)
+
+        return embed

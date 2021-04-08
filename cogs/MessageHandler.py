@@ -29,3 +29,6 @@ class MessageHandler(commands.Cog):
 
             channel = message.channel
             await channel.send(text)
+
+        if invoke.startswith("<search"):
+            await message.delete()

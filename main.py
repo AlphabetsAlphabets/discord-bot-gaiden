@@ -16,7 +16,8 @@ async def on_ready():
     t0 = time.time()
     print("Gaiden is online!")
     t1 = time.time()
-    print(f"Gaiden took {t0-t1}s to startup.")
+    time_taken = (t1 - t0) * 1000
+    print(f"Gaiden took {time_taken}s to startup.")
 
 @bot.command()
 async def ping(ctx):
