@@ -10,5 +10,5 @@ Just a little personal project that I wanted to make. And I've always wanted to 
 | Feature | Status | Completed on |
 |---------|--------|--------------|
 | Send emojis | :white_check_mark: | 7/4/21 |
-| Emoji detection system | :x: | - |
-| Use the emoji detection system to scroll through search resutls | :x: | i |
+| Emoji detection system | :white_check_mark: | 7/4/21 |
+| Use the emoji detection system to scroll through search resutls | :white_check_mark: | 8/4/21 |
