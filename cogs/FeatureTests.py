@@ -9,22 +9,18 @@ class FeatureTests(commands.Cog):
 
     @commands.command()
     async def embed_test(self, ctx):
+        # Creates an instance of discord.Embed, and set the title, and description
         embed = discord.Embed(
             title = "Title",
             description = "Description"
         )
 
-        emoji = "✅"
-
-        for e in ctx.guild.emojis:
-            print(e.name)
-            print(e.id)
-            print()
-
+        # Stores the emojis that I want
         emojis = ["◀️", "➡️", "✅"]
 
         message = await ctx.send(embed=embed)
         for emoji in emojis:
+            # Reacts to the previously sent message with emojis from the emojis list
             await message.add_reaction(emoji)
 
     @commands.command()

@@ -1,4 +1,5 @@
 import discord
+from typing import List
 from discord.ext import commands
 
 import requests
@@ -7,39 +8,97 @@ class Engine(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._last_member = None
+        self.emojis = ["◀️", "➡️", "✅"]
+
+    def structure_embed(self, embed: discord.Embed, result: List[dict], stop: int):
+        for count, result in enumerate(results[:stop], start = 1):
+            desc = result["Text"]
+            url = result["FirstURL"]
+
+            # Setting up the output text
+            return_result = f"{desc}\nFor more information checkout the [source]({url})\n"
+            embed.add_field(value=return_result, inline=False)
+
+        return embed
+
+    async def search(self, message: discord.Message):
+        reactions = message.reactions
+
+        # The bot adds it's own reactions which also triggers this function.
+        # This is to prevent an IndexError
+        if len(reactions) >= 3:
+            view_previous = reactions[0]
+            view_next = reactions[1]
+            done = reactions[2]
+
+            if view_next.count == 2:
+                channel = message.channel
+                await message.delete()
+
+                mid_page = self.search_pages["mid_embed"]
+                await channel.send(embed=mid_page)
+
+            if view_previous.count == 2:
+                author = message.author
+                channel = message.channel
+
+                await message.delete()
+
+                await channel.send(embed=embed)
+
+            if done.count == 2:
+                await message.delete()
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        channel_id = payload.channel_id
+        channel = await self.bot.fetch_channel(channel_id)
+
+        message_id = payload.message_id
+        message = await channel.fetch_message(message_id)
+        embeds = message.embeds
+        if len(embeds) != 0:
+            title = embeds[0].title
+            if "search" in title.lower():
+                await self.search(message)
+
 
     @commands.command(name='search')
     async def instant_answers_api(self, ctx, *args):
-        # The message content
         text = ctx.message.content
+        author = ctx.author.name
 
         # split it by spaces then take the list starting from the first index,
         # because the 0th index is the command itself
         search_query = text.split(" ")[1:]
         search_query = (" ").join(search_query)
 
-        # Replaces all spaces with %20 since spaces are represented that way
-        # in a url
-        search_query = search_query.replace(" ", "%20") 
+        uri = f"https://api.duckduckgo.com/{search_query}?q=&format=json" 
 
-        uri = f"https://api.duckduckgo.com/{search_query}?q=&format=json"
-
-        # Make a request, and get the data behind the key RelatedTopics
         response = requests.get(uri)
-        data = response.json()["RelatedTopics"]
+        data = response.json()
 
-        # Keeps the max amount of results to 8
-        barrier = 4 
+        # Sometimes the key "Abstract" isn't just a blank string, if it is, then
+        # the embed's description is blank, if it isn't then the description will be
+        # the content behind the key "Abstract"
+        embed_desc = ""
 
-        # If there are more than 8 results, then it'll remove everything else
-        # after the 8th index position
-        if barrier > len(data):
-            data = data[:barrier]
+        self.search_pages = dict()
+
+        abstract_desc = data["Abstract"]
+        if abstract_desc != "":
+            embed_desc = abstract_desc
+
+            front_embed = discord.Embed(
+                    title = f"{author}'s search result(s) for '{search_query}'",
+                    description=embed_desc
+            )
+
+            search_results.append(font_embed)
+
+        data = data["RelatedTopics"][:10]
 
         # I only want results with the "Text" key in them
-
-        map(remove_text, data))
-
         results = []
         for result in data:
             for key in result.keys():
@@ -48,24 +107,18 @@ class Engine(commands.Cog):
 
                 results.append(result)
         
-        embed = discord.Embed(title = f"You searched for '{search_query}'")
 
-        embed.set_author(name=ctx.author.name)
+        mid_embed = discord.Embed(title = "Page two")
 
-        for count, result in enumerate(results, start=1):
-            # Extracting the text description, and url
-            desc = result["Text"]
-            url = result["FirstURL"]
+        final_embed = discord.Embed(title = "Page three")
 
-            # Setting up the output text
-            return_result = f"{desc}\nFor more information checkout: {url}\n"
-            embed.add_field(name=f"Result {count}", value=return_result, inline=False)
- 
-        # Emoji detection
-        await ctx.send(embed=embed)
+        midpoint = len(results)
+        mid_embed = self.structure_embed(mid_embed, results, midpoint)
+        final_embed = self.structure_embed(final_embed, results, len(results) - midpoint)
 
-    @staticmethod
-    def remove_text(data: dict):
-        value, key = data.items()
-        if "Text" in key:
-            return data
+        self.search_pages["mid_embed"] = mid_embed
+        self.search_pages["final_embed"] = final_embed
+
+        message = await ctx.send(embed=embed)
+        for emoji in self.emojis:
+            await message.add_reaction(emoji)
