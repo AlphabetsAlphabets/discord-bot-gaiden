@@ -11,10 +11,10 @@ through the results. And you can even delete the search result message after you
 # TODO
 - `:white_check_mark:` :white_check_mark:  
 - `:x:` :x:  
-|             Features            |
-|---------------------------------|
-| Reactive search engine | Status | Completed on |
-|------------------------|--------|--------------|
-| Send emojis            | :white_check_mark: | 7/4/21 |
-| Emoji detection system | :white_check_mark: | 7/4/21 |
+|                              Features                      |
+|------------------------------------------------------------|
+| Reactive search engine |      Status        | Completed on |
+|------------------------|--------------------|--------------|
+| Send emojis            | :white_check_mark: |    7/4/21    |
+| Emoji detection system | :white_check_mark: |    7/4/21    |
 | Use the emoji detection system to scroll through search resutls | :white_check_mark: | 8/4/21 |
