@@ -1,6 +1,8 @@
 # Discord bot gaiden
 Just a little personal project that I wanted to make. And I've always wanted to make a discord bot.
 
+Chinese translation available on [README_CN.md](https://github.com/YJH16120/discord-bot-gaiden/blob/main/README_CN.md)
+
 # Features
 1. Reactive search feature
 The search feature is powered by DuckDuckGo's InstantAnswerAPI. Which provides search results. My bot allows you to scroll

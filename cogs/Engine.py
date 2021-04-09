@@ -2,11 +2,13 @@ import discord
 from typing import List
 from discord.ext import commands
 
-from enum import Enum
-
 import requests
 
+from enum import Enum
+
 class EmbedType(Enum):
+    # Currently has only one variant. More may be added once more features,
+    # that require embeds have been added
     SearchAPI = 1
 
 class Engine(commands.Cog):
@@ -169,7 +171,6 @@ class Engine(commands.Cog):
         secondary_page = discord.Embed(title = "Search result: second page")
         secondary_page = self.format_embed(results[midpoint:], secondary_page)
         self.search_pages["secondary page"] = secondary_page
-
 
         message = await ctx.send(embed=front_page)
 
