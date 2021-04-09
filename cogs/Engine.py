@@ -2,7 +2,12 @@ import discord
 from typing import List
 from discord.ext import commands
 
+from enum import Enum
+
 import requests
+
+class EmbedType(Enum):
+    SearchAPI = 1
 
 class Engine(commands.Cog):
     def __init__(self, bot):
@@ -11,6 +16,12 @@ class Engine(commands.Cog):
         self.emojis = ["◀️", "➡️", "✅"]
 
     async def next_page(self, message: discord.Message, embed: discord.Embed):
+        """
+        Cycles to the next page in the search result. 
+
+        message: The message to delete
+        embed: The embed to be sent in place of the previous message.
+        """
         channel = message.channel
         await message.delete()
 
@@ -24,6 +35,12 @@ class Engine(commands.Cog):
         await message.add_reaction(done)
 
     async def previous_page(self, message: discord.Message, embed: discord.Embed):
+        """
+        Cycles to the previous page in the search result.  
+
+        message: The message to delete
+        embed: The embed to be sent in place of the previous message.
+        """
         channel = message.channel
         await message.delete()
 
@@ -36,48 +53,58 @@ class Engine(commands.Cog):
         await message.add_reaction(next_arrow)
         await message.add_reaction(done)
 
-    def embed_type(self, embed: discord.Embed) -> str: 
+    def embed_variant(self, embed: discord.Embed) -> EmbedType: 
         if "search result" in embed.title.lower():
-            return "search result"
+            return EmbedType.SearchAPI
 
-    async def navigation(self, message: discord.Message):
+    async def check_embed_variant(self, message: discord.Message):
         """message: The embed"""
 
         reactions = message.reactions 
-        # The bot adds it's own reactions which also triggers this function.
-        # This is to prevent an IndexError
         embeds = message.embeds
 
         variant = ""
         relevant_embed = ""
         for embed in embeds:
-            variant = self.embed_type(embed)
+            variant = self.embed_variant(embed)
             relevant_embed = embed
             break
 
+        if variant == EmbedType.SearchAPI:
+            await self.navigate_search_results(reactions, message, relevant_embed)
 
         channel = message.channel 
-        if variant == "search result":
-            for reaction in reactions:
-                count = reaction.count
-                if count < 2:
-                    continue
 
-                emoji = reaction.emoji
+    async def navigate_search_results(self, reactions: List[discord.Reaction], message: discord.Message, relevant_embed: discord.Embed):
+        """
+        Helps to navigate through the search results
 
-                # left
-                if emoji == self.emojis[0]:
-                    await self.previous_page(message, relevant_embed)
+        reactions: A list of reactions
+        message: the message to delete
+        relevant_embed: the embed to be sent in place of the deleted message.
+        """
+        for reaction in reactions:
+            count = reaction.count
+            if count < 2:
+                continue
 
-                # right
-                if emoji == self.emojis[1]:
-                    await self.next_page(message, relevant_embed)
+            emoji = reaction.emoji
 
-                # remove
-                if emoji == self.emojis[2]:
-                    # Where `done` is the check mark emoji if there is 2 or more of them,
-                    # it'll delete the message because, well the person has finished looking at them.
-                    await message.delete()
+            # left
+            if emoji == self.emojis[0]:
+                await self.previous_page(message, relevant_embed)
+
+            # right
+            if emoji == self.emojis[1]:
+                await self.next_page(message, relevant_embed)
+
+            # remove
+            if emoji == self.emojis[2]:
+                # The 'search result' message is deleted as the search results
+                # can get really long, and this is to avoid filling up the screen
+                # with search results
+                await message.delete()
+
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -86,11 +113,13 @@ class Engine(commands.Cog):
 
         message_id = payload.message_id
         message = await channel.fetch_message(message_id)
+
+        # This check is put in place to make sure that only embeds go through
+        # furthermore, the embeds must be a variant of the enum EmbedType
+        # this is the avoid confusion between normal embeds, and command generated ones.
         embeds = message.embeds
-        if len(embeds) != 0:
-            title = embeds[0].title.lower()
-            if "search" in title or "second page" in title:
-                await self.navigation(message)
+        if len(embeds) != 0 or embeds != None:
+            await self.check_embed_variant(message)
 
 
     @commands.command(name='search')
