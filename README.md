@@ -8,11 +8,12 @@ through the results. And you can even delete the search result message after you
 
 # Motivation
 
-# TODO
-- `:white_check_mark:` :white_check_mark:  
-- `:x:` :x:  
-|                              Features                      |
-|------------------------------------------------------------|
+# Changelog
+
+**legend**:  
+- `:white_check_mark:` :white_check_mark: - completed
+- `:x:` :x: - not completed
+
 | Reactive search engine |      Status        | Completed on |
 |------------------------|--------------------|--------------|
 | Send emojis            | :white_check_mark: |    7/4/21    |
