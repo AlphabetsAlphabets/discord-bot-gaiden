@@ -2,14 +2,12 @@ import discord
 from typing import List
 from discord.ext import commands
 
+import module
+from module.consts import EmbedType
+
 import requests
 
 from enum import Enum
-
-class EmbedType(Enum):
-    # Currently has only one variant. More may be added once more features,
-    # that require embeds have been added
-    SearchAPI = 1
 
 class Engine(commands.Cog):
     def __init__(self, bot):
@@ -126,8 +124,14 @@ class Engine(commands.Cog):
 
     @commands.command(name='search')
     async def instant_answers_api(self, ctx, *args):
+        """The main feature of this cog. The search function, powered by the DuckDuckGo InstantAnswerAPI"""
+
+        # Text is the text content that invoked this commands
         text = ctx.message.content
+
+        # The person who invoked the commands
         author = ctx.author.name
+        self.search_pages = dict()
 
         # split it by spaces then take the list starting from the first index,
         # because the 0th index is the command itself
@@ -144,7 +148,6 @@ class Engine(commands.Cog):
         # the content behind the key "Abstract"
         embed_desc = ""
 
-        self.search_pages = dict()
 
         front_page = discord.Embed(
                 title = f"{author}'s search result for '{search_query}'",

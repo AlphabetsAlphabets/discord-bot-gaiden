@@ -1,4 +1,7 @@
 import time
+import sys
+
+sys.path.append("./module/")
 
 import discord
 from discord.ext import commands
