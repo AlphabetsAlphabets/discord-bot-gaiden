@@ -15,6 +15,22 @@ class Engine(commands.Cog):
         self._last_member = None
         self.emojis = ["◀️", "➡️", "✅"]
 
+    def format_embed(self, results: List[dict], embed: discord.Embed) -> discord.Embed:
+        """
+        Populates the embed with information from the DDG api
+
+        results: An array of JSON response of the api
+        embed: The discord embed
+        """
+        for result in results:
+            desc = result["Text"]
+            url = result["FirstURL"]
+
+            return_result = f"{desc}\nFor more information checkout the [source]({url})\n"
+            embed.add_field(name="==="*10, value=return_result, inline=False)
+
+        return embed
+
     async def next_page(self, message: discord.Message, embed: discord.Embed):
         """
         Cycles to the next page in the search result. 
@@ -183,18 +199,3 @@ class Engine(commands.Cog):
         await message.add_reaction(next_arrow)
         await message.add_reaction(done)
 
-    def format_embed(self, results: List[dict], embed: discord.Embed) -> discord.Embed:
-        """
-        Populates the embed with information from the DDG api
-
-        results: An array of JSON response of the api
-        embed: The discord embed
-        """
-        for result in results:
-            desc = result["Text"]
-            url = result["FirstURL"]
-
-            return_result = f"{desc}\nFor more information checkout the [source]({url})\n"
-            embed.add_field(name="==="*10, value=return_result, inline=False)
-
-        return embed

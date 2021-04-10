@@ -19,7 +19,10 @@ class MessageHandler(commands.Cog):
                 return
 
             # Sending a reply to the user
-            await message.reply("replied")
+            text = invoke.split(" ")[1:]
+            text = (" ").join(text)
+
+            await message.reply(text)
 
         if invoke.startswith("gaiden say"):
             # await message.delete()
