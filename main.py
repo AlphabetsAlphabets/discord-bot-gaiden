@@ -1,5 +1,6 @@
 import time
 import sys
+import os
 
 sys.path.append("./module/")
 
@@ -27,8 +28,11 @@ async def ping(ctx):
     await ctx.send("Pong!")
 
 
-with open("token.txt") as f:
-    token = f.readline()
+try:
+    with open("token.txt") as f:
+        token = f.readline()
+except FileNotFoundError:
+    token = os.environ["API_KEY"]
 
 if __name__ == "__main__":
     # Adding cogs
