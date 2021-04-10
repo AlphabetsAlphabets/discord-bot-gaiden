@@ -26,6 +26,7 @@ async def on_ready():
 async def ping(ctx):
     await ctx.send("Pong!")
 
+
 with open("token.txt") as f:
     token = f.readline()
 
