@@ -1,5 +1,6 @@
 .bot/
 cogs/__pycache__/
+module/__pycache__/
 
 
 Procfile
