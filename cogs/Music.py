@@ -4,11 +4,10 @@ from discord.ext import commands
 
 from discord.ext.commands import context
 
-import pytube
-from pytube import YouTube
+from pytube import YouTube, Stream
 
 class User:
-    def __init__(self, ctx: context.Context, stream: pytube.Stream, url: str):
+    def __init__(self, ctx: context.Context, stream: Stream, url: str):
         """ctx: The context at which the command was invoked.
         stream: The audio stream of the song
         url: Url to the video"""
@@ -50,9 +49,9 @@ class Music(commands.Cog):
         if int(abr) > 70:
             return stream
 
-    def better_kbps(self, streams: List[pytube.Stream]):
+    def better_kbps(self, streams: List[Stream]):
         """Filter a list of streams to find the stream with the highest audio quality.
-        streams: A list of `pytube.Stream`."""
+        streams: A list of `Stream`."""
         current = None
         previous = None
         highest_abr = None
@@ -73,12 +72,12 @@ class Music(commands.Cog):
 
         return highest_abr
 
-    def filter_streams(self, url: str, streams: List[pytube.Stream]) -> pytube.Stream:
-        """filters `pytube.Stream` with helper functions to find the highest quality
+    def filter_streams(self, url: str, streams: List[Stream]) -> Stream:
+        """filters `Stream` with helper functions to find the highest quality
         of streams
 
         url: The url to the song,
-        streams: A list of `pytube.Stream`"""
+        streams: A list of `Stream`"""
         streams = filter(self.audio_only, streams)
         streams = list(filter(self.hq_kbps, streams))
         if len(streams) > 1:
