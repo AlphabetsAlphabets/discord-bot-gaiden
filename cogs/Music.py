@@ -133,8 +133,12 @@ class Music(commands.Cog):
         path = user.path + f"/{title}.webm"
 
         voice_client = self.bot.voice_clients[0]
-        audio = discord.FFmpegPCMAudio(path)
-        voice_client.play(audio)
+        try:
+            audio = discord.FFmpegPCMAudio(path)
+            voice_client.play(audio)
+        except discord.opus.OpusNotLoaded as onlEx:
+            msg = "Sorry but this command is currently unavailable. I'm currently working on a fix."
+            ctx.reply(msg)
 
     @commands.command()
     async def pause(self, ctx):
