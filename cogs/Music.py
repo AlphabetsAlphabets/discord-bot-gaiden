@@ -106,6 +106,6 @@ class Music(commands.Cog):
         print("Download complete.")
 
 
-    @command.commands()
+    @commands.command()
     async def play(self, ctx: context.Context, url: str):
         self.prepare_audio_file(ctx, url)
