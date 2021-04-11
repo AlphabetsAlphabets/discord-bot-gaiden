@@ -14,14 +14,16 @@ class MessageHandler(commands.Cog):
         invoke = message.content
 
         if invoke.startswith("reply"):
-            await message.reply("This command is now renamed to 'play'")
+            await message.reply("This command is now renamed to 'say <message>'")
 
         if invoke.startswith("say"):
             # Sending a reply to the user
             text = invoke.split(" ")[1:]
             text = (" ").join(text)
 
-            await message.channel.send(text)
+            channel = message.channel
+
+            await channel.send(text)
             await message.delete()
 
         if invoke.startswith("gaiden say"):
