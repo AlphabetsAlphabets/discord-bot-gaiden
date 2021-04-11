@@ -141,7 +141,7 @@ class Music(commands.Cog):
             voice_client.play(audio)
         except discord.opus.OpusNotLoaded as onlEx:
             msg = "Sorry but this command is currently unavailable. I'm currently working on a fix."
-            ctx.reply(msg)
+            await ctx.reply(msg)
 
     @commands.command()
     async def pause(self, ctx: context.Context):
