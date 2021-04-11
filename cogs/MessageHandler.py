@@ -14,10 +14,6 @@ class MessageHandler(commands.Cog):
         invoke = message.content
 
         if invoke.startswith("reply"):
-            if message.author.name != "Dex":
-                await message.reply("Lol fuck off.")
-                return
-
             # Sending a reply to the user
             text = invoke.split(" ")[1:]
             text = (" ").join(text)

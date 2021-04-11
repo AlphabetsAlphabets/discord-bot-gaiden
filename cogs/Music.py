@@ -2,16 +2,18 @@ import discord
 from typing import List
 from discord.ext import commands
 
+from discord.ext.commands import context
+
+import pytube
 from pytube import YouTube
 
 class User:
-    def __init__(self, ctx: discord.commands.Context, stream: pytube.Stream, url: str):
+    def __init__(self, ctx: context.Context, stream: pytube.Stream, url: str):
         """ctx: The context at which the command was invoked.
         stream: The audio stream of the song
         url: Url to the video"""
 
         author = ctx.author
-        self.name = author.name 
         self.id = author.id
 
         self.song = stream.title
@@ -24,20 +26,20 @@ class Music(commands.Cog):
         self._last_member = None
 
         """
-        self.users = {"Dex#1234": {"song": "My Way", queue: "Don't stop me now", "I'm still standing"}}
         The point of self.users is to store which user is currently using the bot. The current song,
         and what songs the user has queued up.
         """
         self.users = dict()
+        print(len(self.users))
 
     def audio_only(self, stream):
         mime_type = stream.mime_type
 
         has_audio_type = mime_type == "audio/webm"
         has_audio = stream.includes_audio_track
-        has_no_video = !stream.includes_video_track
+        has_no_video = stream.includes_video_track
 
-        is_audio = has_audio_type and has_audio and has_no_video
+        is_audio = has_audio_type and has_audio and not has_no_video
 
         if (is_audio):
             return stream
@@ -49,9 +51,12 @@ class Music(commands.Cog):
             return stream
 
     def better_kbps(self, streams: List[pytube.Stream]):
+        """Filter a list of streams to find the stream with the highest audio quality.
+        streams: A list of `pytube.Stream`."""
         current = None
         previous = None
         highest_abr = None
+
         for stream in streams:
             if previous is None:
                 previous = stream
@@ -68,7 +73,12 @@ class Music(commands.Cog):
 
         return highest_abr
 
-    def filter_streams(self, url, streams):
+    def filter_streams(self, url: str, streams: List[pytube.Stream]) -> pytube.Stream:
+        """filters `pytube.Stream` with helper functions to find the highest quality
+        of streams
+
+        url: The url to the song,
+        streams: A list of `pytube.Stream`"""
         streams = filter(self.audio_only, streams)
         streams = list(filter(self.hq_kbps, streams))
         if len(streams) > 1:
@@ -76,19 +86,26 @@ class Music(commands.Cog):
         else: 
             stream = streams
 
-        return stream
-        
+        return stream[0]
 
-    def add_listener(self, user: User):
-        pass
+    def prepare_audio_file(self, ctx: context.Context, url: str):
+        """Prepares the audio file, by filtering streams, and downloading the one with
+        highest quality, then making a folder for each user.
 
-    @commands.command
-    async def play(self, ctx, url):
+        ctx: The context in which this command was invoked
+        url: Url to the song."""
         streams = YouTube(url).streams
         stream = self.filter_streams(url, streams)
 
         user = User(ctx, stream, url)
-        self.users[user.name] = user
+        self.users[user.id] = user
 
         title = stream.title
-        # stream.download(f"streaming/{user.name}", filename = f"{title}.mp3")
+        self.users[user.id] = user
+        stream.download(f"streaming/{user.id}", filename = f"{title}.mp3")
+        print("Download complete.")
+
+
+    @command.commands()
+    async def play(self, ctx: context.Context, url: str):
+        self.prepare_audio_file(ctx, url)
