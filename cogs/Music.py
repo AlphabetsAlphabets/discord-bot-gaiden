@@ -136,7 +136,7 @@ class Music(commands.Cog):
 
         # There is only one voice client anyways to just get the first one.
         voice_client = self.bot.voice_clients[0]
-        try:
+        tryo
             audio = discord.FFmpegPCMAudio(path)
             voice_client.play(audio)
         except discord.opus.OpusNotLoaded as onlEx:
