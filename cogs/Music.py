@@ -9,8 +9,10 @@ import shutil
 from pytube import YouTube, Stream
 
 class User:
+    """Stores information about the user's current song"""
     def __init__(self, ctx: context.Context, stream: Stream, url: str):
-        """ctx: The context at which the command was invoked.
+        """
+        ctx: The context at which the command was invoked.
         stream: The audio stream of the song
         url: Url to the video"""
 
@@ -103,6 +105,9 @@ class Music(commands.Cog):
         user = User(ctx, stream, url)
         self.users[user.id] = user
 
+        # Ubuntu doesn't allow chracters in the following replace methods, to appear in the file name.
+        # You cannot have multiple instances of . unless it's to specify the file type, and the bar |
+        # cannot appear at all.
         title = stream.title
         title = title.replace(".", "")
         title = title.replace("|", "")
@@ -126,12 +131,10 @@ class Music(commands.Cog):
 
         title = self.prepare_audio_file(ctx, url)
 
-        # Among Us Medley  Super Smash Bros Ultimate.webm
-        # Among Us Medley  Super Smash Bros. Ultimate.webm
-
         user = self.users[user_id]
         path = user.path + f"/{title}.webm"
 
+        # There is only one voice client anyways to just get the first one.
         voice_client = self.bot.voice_clients[0]
         try:
             audio = discord.FFmpegPCMAudio(path)
@@ -141,7 +144,9 @@ class Music(commands.Cog):
             ctx.reply(msg)
 
     @commands.command()
-    async def pause(self, ctx):
+    async def pause(self, ctx: context.Context):
+        """Pauses the audio playback
+        ctx: The context in which this command is invoked."""
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         if not voice.is_playing():
             await ctx.send("Not playing.")
@@ -150,6 +155,8 @@ class Music(commands.Cog):
 
     @commands.command()
     async def resume(self, ctx):
+        """Resumes the audio playback
+        ctx: The context in which this command is invoked."""
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         if voice.is_paused():
             voice.resume()
@@ -169,14 +176,15 @@ class Music(commands.Cog):
 
     @commands.command(name="dc")
     async def disconnect(self, ctx: context.Context):
+        """Disconnects from the voice chat, and clears the audio streaming cache for the current user"""
+        # TODO: Make clearing the cache song specfic, and a few seconds right after the song stops output.
         self.connected = False
         voice_client = self.bot.voice_clients[0]
         await voice_client.disconnect()
 
         user_id = ctx.author.id
-        if False:
-            if user_id in self.users:
-                path = "streaming/" + user_id
-                shutil.rmtree(path)
+        if user_id in self.users:
+            path = "streaming/" + user_id
+            shutil.rmtree(path)
 
 
