@@ -142,8 +142,9 @@ class Engine(commands.Cog):
     async def instant_answers_api(self, ctx, *args):
         """The main feature of this cog. The search function, powered by the DuckDuckGo InstantAnswerAPI"""
 
+        message = ctx.message
         # Text is the text content that invoked this commands
-        text = ctx.message.content
+        text = message.content
 
         # The person who invoked the commands
         author = ctx.author.name
@@ -198,4 +199,5 @@ class Engine(commands.Cog):
 
         await message.add_reaction(next_arrow)
         await message.add_reaction(done)
+
 

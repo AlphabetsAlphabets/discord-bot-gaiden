@@ -1,8 +1,10 @@
 import discord
-from typing import List
 from discord.ext import commands
-
 from discord.ext.commands import context
+
+from typing import List
+import time
+import shutil
 
 from pytube import YouTube, Stream
 
@@ -15,14 +17,16 @@ class User:
         author = ctx.author
         self.id = author.id
 
-        self.song = stream.title
+        self.current_song = stream.title
         self.song_url = url
-        self.queue = None
+        self.path = f"streaming/{author.id}"
+
 
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._last_member = None
+        self.connected = False
 
         """
         The point of self.users is to store which user is currently using the bot. The current song,
@@ -87,7 +91,7 @@ class Music(commands.Cog):
 
         return stream[0]
 
-    def prepare_audio_file(self, ctx: context.Context, url: str):
+    def prepare_audio_file(self, ctx: context.Context, url: str) -> str:
         """Prepares the audio file, by filtering streams, and downloading the one with
         highest quality, then making a folder for each user.
 
@@ -100,11 +104,75 @@ class Music(commands.Cog):
         self.users[user.id] = user
 
         title = stream.title
-        self.users[user.id] = user
-        stream.download(f"streaming/{user.id}", filename = f"{title}.mp3")
-        print("Download complete.")
+        title = title.replace(".", "")
+        title = title.replace("|", "")
 
+        self.users[user.id] = user
+        stream.download(f"streaming/{user.id}", filename = title)
+
+        return title
 
     @commands.command()
-    async def play(self, ctx: context.Context, url: str):
-        self.prepare_audio_file(ctx, url)
+    async def play(self, ctx: context.Context, url: str = None):
+        user_id = ctx.author.id
+        if user_id in self.users:
+            user = self.users[user_id]
+            if user.song_url == url:
+                await ctx.reply("That song is already playing.")
+                return
+
+        if url is None:
+            url = "https://www.youtube.com/watch?v=ylwckvS0YHw"
+
+        title = self.prepare_audio_file(ctx, url)
+
+        # Among Us Medley  Super Smash Bros Ultimate.webm
+        # Among Us Medley  Super Smash Bros. Ultimate.webm
+
+        user = self.users[user_id]
+        path = user.path + f"/{title}.webm"
+
+        voice_client = self.bot.voice_clients[0]
+        audio = discord.FFmpegPCMAudio(path)
+        voice_client.play(audio)
+
+    @commands.command()
+    async def pause(self, ctx):
+        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+        if not voice.is_playing():
+            await ctx.send("Not playing.")
+        else:
+            voice.pause()
+
+    @commands.command()
+    async def resume(self, ctx):
+        voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+        if voice.is_paused():
+            voice.resume()
+        else:
+            await ctx.send("Not paused.")
+
+
+    @commands.command(name="connect")
+    async def connect_test(self, ctx: context.Context, voice_channel):
+        """use this function to test if the bot can connect a vc"""
+        if self.connected:
+            await ctx.reply("Sorry, but Gaiden is already connected to another voice channel.")
+
+        voice_channel = discord.utils.get(ctx.guild.voice_channels, name=voice_channel)
+        voice_protocol = await voice_channel.connect()
+        self.connected = True
+
+    @commands.command(name="dc")
+    async def disconnect(self, ctx: context.Context):
+        self.connected = False
+        voice_client = self.bot.voice_clients[0]
+        await voice_client.disconnect()
+
+        user_id = ctx.author.id
+        if False:
+            if user_id in self.users:
+                path = "streaming/" + user_id
+                shutil.rmtree(path)
+
+

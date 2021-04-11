@@ -14,11 +14,15 @@ class MessageHandler(commands.Cog):
         invoke = message.content
 
         if invoke.startswith("reply"):
+            await message.reply("This command is now renamed to 'play'")
+
+        if invoke.startswith("say"):
             # Sending a reply to the user
             text = invoke.split(" ")[1:]
             text = (" ").join(text)
 
-            await message.reply(text)
+            await message.channel.send(text)
+            await message.delete()
 
         if invoke.startswith("gaiden say"):
             # await message.delete()
@@ -29,6 +33,3 @@ class MessageHandler(commands.Cog):
             channel = message.channel
             await message.delete()
             await channel.send(text)
-
-        if invoke.startswith("<search"):
-            await message.delete()
