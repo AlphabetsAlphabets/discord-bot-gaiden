@@ -9,33 +9,22 @@ import shutil
 from pytube import YouTube, Stream
 
 class User:
-    """Stores information about the user's current song"""
-    def __init__(self, ctx: context.Context, stream: Stream, url: str):
-        """
-        ctx: The context at which the command was invoked.
-        stream: The audio stream of the song
-        url: Url to the video"""
-
-        author = ctx.author
-        self.id = author.id
-
-        self.current_song = stream.title
-        self.song_url = url
-        self.path = f"streaming/{author.id}"
-
+    def __init__(self, ctx: context.Context, url: str):
+        self.user_id = ctx.author.id
+        self.currently_listening_to = url
 
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._last_member = None
-        self.connected = False
+        self.is_connected = False
+        self.voice_protocols = dict()
 
         """
         The point of self.users is to store which user is currently using the bot. The current song,
         and what songs the user has queued up.
         """
-        self.users = dict()
-        print(len(self.users))
+        self.users_listening = dict()
 
     def audio_only(self, stream):
         mime_type = stream.mime_type
@@ -50,12 +39,12 @@ class Music(commands.Cog):
             return stream
 
 
-    def hq_kbps(self, stream):
+    def get_kbps_over_70(self, stream):
         abr = stream.abr[:-4]
         if int(abr) > 70:
             return stream
 
-    def better_kbps(self, streams: List[Stream]):
+    def get_best_kbps(self, streams: List[Stream]):
         """Filter a list of streams to find the stream with the highest audio quality.
         streams: A list of `Stream`."""
         current = None
@@ -85,9 +74,9 @@ class Music(commands.Cog):
         url: The url to the song,
         streams: A list of `Stream`"""
         streams = filter(self.audio_only, streams)
-        streams = list(filter(self.hq_kbps, streams))
+        streams = list(filter(self.get_kbps_over_70, streams))
         if len(streams) > 1:
-            stream = self.better_kbps(streams)
+            stream = self.get_best_kbps(streams)
         else: 
             stream = streams
 
@@ -102,8 +91,7 @@ class Music(commands.Cog):
         streams = YouTube(url).streams
         stream = self.filter_streams(url, streams)
 
-        user = User(ctx, stream, url)
-        self.users[user.id] = user
+        user_id = ctx.author.id
 
         # Ubuntu doesn't allow chracters in the following replace methods, to appear in the file name.
         # You cannot have multiple instances of . unless it's to specify the file type, and the bar |
@@ -112,27 +100,19 @@ class Music(commands.Cog):
         title = title.replace(".", "")
         title = title.replace("|", "")
 
-        self.users[user.id] = user
-        stream.download(f"streaming/{user.id}", filename = title)
+        stream.download(f"streaming/{user_id}", filename = title)
 
         return title
 
     @commands.command()
     async def play(self, ctx: context.Context, url: str = None):
-        user_id = ctx.author.id
-        if user_id in self.users:
-            user = self.users[user_id]
-            if user.song_url == url:
-                await ctx.reply("That song is already playing.")
-                return
-
-        if url is None:
-            url = "https://www.youtube.com/watch?v=ylwckvS0YHw"
+        await self.connect(ctx, url)
 
         title = self.prepare_audio_file(ctx, url)
-
-        user = self.users[user_id]
-        path = user.path + f"/{title}.webm"
+        
+        user_id = ctx.author.id
+        user = self.users_listening[user_id]
+        path = f"streaming/{user_id}/{title}.webm"
 
         # There is only one voice client anyways to just get the first one.
         voice_client = self.bot.voice_clients[0]
@@ -140,7 +120,7 @@ class Music(commands.Cog):
             audio = discord.FFmpegPCMAudio(path)
             voice_client.play(audio)
         except discord.opus.OpusNotLoaded as onlEx:
-            msg = "Sorry but this command is currently unavailable. I'm currently working on a fix."
+            msg = "Sorry but this command is currently unavailable, because FFmpeg is not available. DM/ping Aurelius#6698 with this exact message."
             await ctx.reply(msg)
 
     @commands.command()
@@ -164,27 +144,37 @@ class Music(commands.Cog):
             await ctx.send("Not paused.")
 
 
-    @commands.command(name="connect")
-    async def connect_test(self, ctx: context.Context, voice_channel):
+    async def connect(self, ctx: context.Context, url: str):
         """use this function to test if the bot can connect a vc"""
-        if self.connected:
-            await ctx.reply("Sorry, but Gaiden is already connected to another voice channel.")
+        # TODO: Find a way to add a check, to make sure you can use this in multiple servers
+        voice_channel = ctx.author.voice.channel
+        try:
+            voice_protocol = await voice_channel.connect()
+            self.voice_protocols[ctx.author.id] = voice_protocol
 
-        voice_channel = discord.utils.get(ctx.guild.voice_channels, name=voice_channel)
-        voice_protocol = await voice_channel.connect()
-        self.connected = True
+        except discord.ClientException:
+            voice_protocol = self.voice_protocols[ctx.author.name]
+            await voice_protocol.disconnect()
+
+            voice_protocol = await voice_channel.connect()
+            self.voice_protocols[ctx.author.id] = voice_protocol
+
+        user = User(ctx, url)
+        self.users_listening[ctx.author.id] = user
 
     @commands.command(name="dc")
     async def disconnect(self, ctx: context.Context):
         """Disconnects from the voice chat, and clears the audio streaming cache for the current user"""
         # TODO: Make clearing the cache song specfic, and a few seconds right after the song stops output.
-        self.connected = False
-        voice_client = self.bot.voice_clients[0]
-        await voice_client.disconnect()
+        user_id = ctx.author.id
+        voice_protocol = self.voice_protocols[user_id]
+        await voice_protocol.disconnect()
+        del self.voice_protocols[user_id]
 
         user_id = ctx.author.id
-        if user_id in self.users:
-            path = "streaming/" + user_id
+        if user_id in self.users_listening:
+            path = "streaming/" + str(user_id)
             shutil.rmtree(path)
 
+            del self.users_listening[user_id]
 
