@@ -4,10 +4,9 @@ from discord.ext import commands
 
 import module
 from module.consts import EmbedType
+from module.type_verification import TypeVerifier
 
 import requests
-
-from enum import Enum
 
 class Engine(commands.Cog):
     def __init__(self, bot):
@@ -75,14 +74,14 @@ class Engine(commands.Cog):
 
     async def check_embed_variant(self, message: discord.Message):
         """message: The embed"""
-
+ 
         reactions = message.reactions 
         embeds = message.embeds
 
         variant = ""
         relevant_embed = ""
         for embed in embeds:
-            variant = self.embed_variant(embed)
+            variant = TypeVerifier.embed_variant(embed)
             relevant_embed = embed
             break
 
@@ -136,7 +135,6 @@ class Engine(commands.Cog):
         embeds = message.embeds
         if len(embeds) != 0 or embeds != None:
             await self.check_embed_variant(message)
-
 
     @commands.command(name='search')
     async def instant_answers_api(self, ctx, *args):

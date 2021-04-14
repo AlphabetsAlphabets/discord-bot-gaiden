@@ -2,27 +2,33 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import context
 
+import module
+from module.consts import EmbedType
+from module.consts import User
+from module.type_verification import TypeVerifier
+
 from typing import List
 import time
 import shutil
 
 from pytube import YouTube, Stream
 
-class User:
-    def __init__(self, ctx: context.Context, url: str):
-        self.user_id = ctx.author.id
-        self.currently_listening_to = url
-
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._last_member = None
-        self.is_connected = False
-        self.voice_protocols = dict()
 
         """
-        The point of self.users is to store which user is currently using the bot. The current song,
-        and what songs the user has queued up.
+        Keeps track of each user's voice protocol, so when they call a function to 
+        disconnect from it, it won't cause gaiden to disconnect across all vc's he is 
+        currently connected to.
+        """
+        self.voice_protocols = dict()
+        self.emojis = {"play_pause": "⏯️", "stop": "🚫", "leave": "👋"}
+
+        """
+        The point of self.users_listening is to store and keep track of which
+        user is currently using the bot.
         """
         self.users_listening = dict()
 
@@ -31,13 +37,12 @@ class Music(commands.Cog):
 
         has_audio_type = mime_type == "audio/webm"
         has_audio = stream.includes_audio_track
-        has_no_video = stream.includes_video_track
+        has_video = stream.includes_video_track
 
-        is_audio = has_audio_type and has_audio and not has_no_video
+        is_audio = has_audio_type and has_audio and not has_video
 
         if (is_audio):
             return stream
-
 
     def get_kbps_over_70(self, stream):
         abr = stream.abr[:-4]
@@ -73,6 +78,7 @@ class Music(commands.Cog):
 
         url: The url to the song,
         streams: A list of `Stream`"""
+
         streams = filter(self.audio_only, streams)
         streams = list(filter(self.get_kbps_over_70, streams))
         if len(streams) > 1:
@@ -93,12 +99,12 @@ class Music(commands.Cog):
 
         user_id = ctx.author.id
 
-        # Ubuntu doesn't allow chracters in the following replace methods, to appear in the file name.
-        # You cannot have multiple instances of . unless it's to specify the file type, and the bar |
-        # cannot appear at all.
+        # All replace calls are because those characters are not allowed in the
+        # file names on Ubuntu
         title = stream.title
         title = title.replace(".", "")
         title = title.replace("|", "")
+        title = title.replace("\"", "")
 
         stream.download(f"streaming/{user_id}", filename = title)
 
@@ -106,12 +112,15 @@ class Music(commands.Cog):
 
     @commands.command()
     async def play(self, ctx: context.Context, url: str = None):
+        """It first connects to the voice channel, the caller is in, prepares an audio file
+        then starts audio playback."""
         await self.connect(ctx, url)
 
         title = self.prepare_audio_file(ctx, url)
         
         user_id = ctx.author.id
         user = self.users_listening[user_id]
+        user.song_title = title
         path = f"streaming/{user_id}/{title}.webm"
 
         # There is only one voice client anyways to just get the first one.
@@ -127,16 +136,20 @@ class Music(commands.Cog):
     async def pause(self, ctx: context.Context):
         """Pauses the audio playback
         ctx: The context in which this command is invoked."""
+
+        # TODO: Make this part of an embed system
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-        if not voice.is_playing():
-            await ctx.send("Not playing.")
-        else:
+        if voice.is_playing():
             voice.pause()
+        else:
+            await ctx.send("Not playing.")
 
     @commands.command()
     async def resume(self, ctx):
         """Resumes the audio playback
         ctx: The context in which this command is invoked."""
+
+        # TODO: Make this part of an embed system
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         if voice.is_paused():
             voice.resume()
@@ -165,8 +178,14 @@ class Music(commands.Cog):
     @commands.command(name="dc")
     async def disconnect(self, ctx: context.Context):
         """Disconnects from the voice chat, and clears the audio streaming cache for the current user"""
+
         # TODO: Make clearing the cache song specfic, and a few seconds right after the song stops output.
+        # TODO: Make this part of an embed system
         user_id = ctx.author.id
+        if user_id not in self.voice_protocols:
+            ctx.reply("You aren't in a voice channel.")
+            return
+
         voice_protocol = self.voice_protocols[user_id]
         await voice_protocol.disconnect()
         del self.voice_protocols[user_id]
