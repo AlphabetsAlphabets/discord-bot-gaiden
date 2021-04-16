@@ -12,6 +12,14 @@ import time
 import shutil
 
 from pytube import YouTube, Stream
+from pytube.exceptions import RegexMatchError
+
+"""
+Current task:
+Using the User class from consts.py and extending it with functions such pause,
+play, etc. And to store more meaningful information so it can be used to check
+a user's current information and can be used to react accordingly.
+"""
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -33,6 +41,7 @@ class Music(commands.Cog):
         self.users_listening = dict()
 
     def audio_only(self, stream):
+        """Filters a pytube.Stream object so that only audio files are returned"""
         mime_type = stream.mime_type
 
         has_audio_type = mime_type == "audio/webm"
@@ -45,6 +54,8 @@ class Music(commands.Cog):
             return stream
 
     def get_kbps_over_70(self, stream):
+        """Filteres a pytube.Stream object and only returns if the kbps of the stream is
+        over 70"""
         abr = stream.abr[:-4]
         if int(abr) > 70:
             return stream
@@ -88,7 +99,7 @@ class Music(commands.Cog):
 
         return stream[0]
 
-    def prepare_audio_file(self, ctx: context.Context, url: str) -> str:
+    async def prepare_audio_file(self, ctx: context.Context, url: str) -> str:
         """Prepares the audio file, by filtering streams, and downloading the one with
         highest quality, then making a folder for each user.
 
@@ -105,8 +116,13 @@ class Music(commands.Cog):
         title = title.replace(".", "")
         title = title.replace("|", "")
         title = title.replace("\"", "")
+        title = title.replace("~", "")
 
-        stream.download(f"streaming/{user_id}", filename = title)
+        try:
+            stream.download(f"streaming/{user_id}", filename = title)
+        except RegexMatchError:
+            await ctx.reply("The link you used is not a valid youtube link.")
+            return
 
         return title
 
@@ -116,7 +132,7 @@ class Music(commands.Cog):
         then starts audio playback."""
         await self.connect(ctx, url)
 
-        title = self.prepare_audio_file(ctx, url)
+        title = await self.prepare_audio_file(ctx, url)
         
         user_id = ctx.author.id
         user = self.users_listening[user_id]
@@ -159,19 +175,30 @@ class Music(commands.Cog):
 
     async def connect(self, ctx: context.Context, url: str):
         """use this function to test if the bot can connect a vc"""
-        # TODO: Find a way to add a check, to make sure you can use this in multiple servers
-        voice_channel = ctx.author.voice.channel
+        voice = ctx.author.voice
+        user_id = ctx.author.id
+        guild = ctx.author.guild
+        if voice == None:
+            await ctx.reply("You are not connected to a voice channel.")
+            return
+
+        voice_channel = voice.channel
         try:
             voice_protocol = await voice_channel.connect()
-            self.voice_protocols[ctx.author.id] = voice_protocol
 
-        except discord.ClientException:
-            voice_protocol = self.voice_protocols[ctx.author.name]
-            await voice_protocol.disconnect()
+            # Adds a user to the list of users that are currently using gaiden
+            # for music playback
+            self.voice_protocols[user_id] = voice_protocol
 
-            voice_protocol = await voice_channel.connect()
-            self.voice_protocols[ctx.author.id] = voice_protocol
+        except discord.ClientException as cEx:
+            # Gets the user object
+            user = self.voice_protocols[user_id]
+            await user.disconnect()
 
+            user_voice_protocol = await user.connect()
+            self.voice_protocols[user_id] = user_voice_protocol
+
+        # Creates a user object then stores the user
         user = User(ctx, url)
         self.users_listening[ctx.author.id] = user
 
@@ -179,7 +206,8 @@ class Music(commands.Cog):
     async def disconnect(self, ctx: context.Context):
         """Disconnects from the voice chat, and clears the audio streaming cache for the current user"""
 
-        # TODO: Make clearing the cache song specfic, and a few seconds right after the song stops output.
+        # TODO: Make this function to be used from the User class, go-to definition
+        # in line 
         # TODO: Make this part of an embed system
         user_id = ctx.author.id
         if user_id not in self.voice_protocols:
