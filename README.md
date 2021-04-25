@@ -31,4 +31,4 @@ audio flow control; Pausing, playing, etc.
 | Connect to voice channel| :white_check_mark: | 11/4/21 |
 | Download an audio file  | :white_check_mark: | 11/4/21 |
 | Streaming from an audio file | :white_check_mark: | 11/4/21 |
-| Control playback with pause, play, etc | :white_check_mark | 11/4/21 |
+| Control playback with pause, play, etc | :white_check_mark: | 11/4/21 |

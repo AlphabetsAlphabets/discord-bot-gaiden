@@ -224,4 +224,3 @@ class Music(commands.Cog):
             shutil.rmtree(path)
 
             del self.users_listening[user_id]
-
