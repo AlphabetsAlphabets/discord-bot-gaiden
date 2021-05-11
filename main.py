@@ -28,7 +28,6 @@ async def on_ready():
 async def ping(ctx):
     await ctx.send("Pong!")
 
-
 try:
     with open("token.txt") as f:
         token = f.readline()
@@ -44,3 +43,4 @@ if __name__ == "__main__":
 
     # running the bot
     bot.run(token)
+    

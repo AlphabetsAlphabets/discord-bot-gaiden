@@ -2,11 +2,11 @@ import discord
 from typing import List
 from discord.ext import commands
 
-import module
 from module.consts import EmbedType
 from module.type_verification import TypeVerifier
 
 import requests
+
 
 class Engine(commands.Cog):
     def __init__(self, bot):
@@ -25,14 +25,16 @@ class Engine(commands.Cog):
             desc = result["Text"]
             url = result["FirstURL"]
 
-            return_result = f"{desc}\nFor more information checkout the [source]({url})\n"
-            embed.add_field(name="==="*10, value=return_result, inline=False)
+            return_result = (
+                f"{desc}\nFor more information checkout the [source]({url})\n"
+            )
+            embed.add_field(name="===" * 10, value=return_result, inline=False)
 
         return embed
 
     async def next_page(self, message: discord.Message, embed: discord.Embed):
         """
-        Cycles to the next page in the search result. 
+        Cycles to the next page in the search result.
 
         message: The message to delete
         embed: The embed to be sent in place of the previous message.
@@ -51,7 +53,7 @@ class Engine(commands.Cog):
 
     async def previous_page(self, message: discord.Message, embed: discord.Embed):
         """
-        Cycles to the previous page in the search result.  
+        Cycles to the previous page in the search result.
 
         message: The message to delete
         embed: The embed to be sent in place of the previous message.
@@ -68,14 +70,14 @@ class Engine(commands.Cog):
         await message.add_reaction(next_arrow)
         await message.add_reaction(done)
 
-    def embed_variant(self, embed: discord.Embed) -> EmbedType: 
+    def embed_variant(self, embed: discord.Embed) -> EmbedType:
         if "search result" in embed.title.lower():
             return EmbedType.SearchAPI
 
     async def check_embed_variant(self, message: discord.Message):
         """message: The embed"""
- 
-        reactions = message.reactions 
+
+        reactions = message.reactions
         embeds = message.embeds
 
         variant = ""
@@ -88,9 +90,14 @@ class Engine(commands.Cog):
         if variant == EmbedType.SearchAPI:
             await self.navigate_search_results(reactions, message, relevant_embed)
 
-        channel = message.channel 
+        channel = message.channel
 
-    async def navigate_search_results(self, reactions: List[discord.Reaction], message: discord.Message, relevant_embed: discord.Embed):
+    async def navigate_search_results(
+        self,
+        reactions: List[discord.Reaction],
+        message: discord.Message,
+        relevant_embed: discord.Embed,
+    ):
         """
         Helps to navigate through the search results
 
@@ -120,7 +127,6 @@ class Engine(commands.Cog):
                 # with search results
                 await message.delete()
 
-
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         channel_id = payload.channel_id
@@ -136,10 +142,9 @@ class Engine(commands.Cog):
         if len(embeds) != 0 or embeds != None:
             await self.check_embed_variant(message)
 
-    @commands.command(name='search')
+    @commands.command(name="search")
     async def instant_answers_api(self, ctx, *args):
         """The main feature of this cog. The search function, powered by the DuckDuckGo InstantAnswerAPI"""
-
         message = ctx.message
         # Text is the text content that invoked this commands
         text = message.content
@@ -153,7 +158,7 @@ class Engine(commands.Cog):
         search_query = text.split(" ")[1:]
         search_query = (" ").join(search_query)
 
-        uri = f"https://api.duckduckgo.com/{search_query}?q=&format=json" 
+        uri = f"https://api.duckduckgo.com/{search_query}?q=&format=json"
 
         response = requests.get(uri)
         data = response.json()
@@ -161,12 +166,10 @@ class Engine(commands.Cog):
         # Sometimes the key "Abstract" isn't just a blank string, if it is, then
         # the embed's description is blank, if it isn't then the description will be
         # the content behind the key "Abstract"
-        embed_desc = ""
-
 
         front_page = discord.Embed(
-                title = f"{author}'s search result for '{search_query}'",
-                description = data["Abstract"]
+            title=f"{author}'s search result for '{search_query}'",
+            description=data["Abstract"],
         )
 
         data = data["RelatedTopics"][:10]
@@ -179,14 +182,15 @@ class Engine(commands.Cog):
                     continue
 
                 results.append(result)
-        
-        # create the embed from the results taken by the API response of ddg's instant answer api
+
+        # create the embed from the results taken by the API response of ddg's
+        # instant answer api
         midpoint = round(len(results) / 2)
         front_page = self.format_embed(results[:midpoint], front_page)
 
         self.search_pages["front page"] = front_page
 
-        secondary_page = discord.Embed(title = "Search result: second page")
+        secondary_page = discord.Embed(title="Search result: second page")
         secondary_page = self.format_embed(results[midpoint:], secondary_page)
         self.search_pages["secondary page"] = secondary_page
 
@@ -195,7 +199,7 @@ class Engine(commands.Cog):
         next_arrow = self.emojis[1]
         done = self.emojis[2]
 
+
         await message.add_reaction(next_arrow)
         await message.add_reaction(done)
-
 
