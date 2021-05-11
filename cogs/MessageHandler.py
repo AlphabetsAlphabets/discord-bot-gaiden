@@ -5,6 +5,7 @@ class MessageHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._last_member = None
+        self.git = True
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -23,5 +24,14 @@ class MessageHandler(commands.Cog):
             await message.delete()
             await channel.send(text)
 
-        if "help" in invoke or "i suck" in invoke:
-            await message.reply("Lmao git gud")
+        if self.git:
+            if "help" in invoke or "i suck" in invoke:
+                await message.reply("Lmao git gud")
+
+    @commands.command()
+    async def toggle_git(self, ctx):
+        if ctx.content.lower() == "disable":
+            self.git = False
+            return
+
+        self.git = True
