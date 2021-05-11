@@ -11,7 +11,7 @@ class MessageHandler(commands.Cog):
         if message.author == self.bot.user:
             return
 
-        invoke = message.content
+        invoke = message.content.lower()
 
         if invoke.startswith("gaiden say"):
             # await message.delete()
@@ -22,3 +22,6 @@ class MessageHandler(commands.Cog):
             channel = message.channel
             await message.delete()
             await channel.send(text)
+
+        if "help" in invoke or "i suck" in invoke:
+            await message.reply("Lmao git gud")
