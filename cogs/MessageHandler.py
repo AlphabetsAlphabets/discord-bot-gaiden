@@ -30,8 +30,13 @@ class MessageHandler(commands.Cog):
 
     @commands.command()
     async def toggle_git(self, ctx):
-        if ctx.message.content.lower() == "disable":
+        message = ctx.message.content.lower()
+        message = message.split(" ")[-1]
+        print(message)
+        
+        if message == "disable":
             self.git = False
-            return
-
-        self.git = True
+            print(self.git)
+        else:
+            self.git = True
+            print(self.git)
