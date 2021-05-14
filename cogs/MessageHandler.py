@@ -25,18 +25,18 @@ class MessageHandler(commands.Cog):
             await channel.send(text)
 
         if self.git:
-            if "help" in invoke or "i suck" in invoke:
+            key_word_in_message = ("help" in invoke or "i suck" in invoke)
+            length_of_message = len(invoke)
+
+            if key_word_in_message and length_of_message > 50:
                 await message.reply("Lmao git gud")
 
     @commands.command()
     async def toggle_git(self, ctx):
         message = ctx.message.content.lower()
         message = message.split(" ")[-1]
-        print(message)
         
         if message == "disable":
             self.git = False
-            print(self.git)
         else:
             self.git = True
-            print(self.git)
