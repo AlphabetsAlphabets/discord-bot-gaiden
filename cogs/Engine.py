@@ -7,6 +7,7 @@ from module.type_verification import TypeVerifier
 
 import requests
 
+
 class Engine(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -200,4 +201,3 @@ class Engine(commands.Cog):
 
         await message.add_reaction(next_arrow)
         await message.add_reaction(done)
-
