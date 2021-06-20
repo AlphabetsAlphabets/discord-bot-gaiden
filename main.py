@@ -1,3 +1,5 @@
+@bot.event
+@bot.event
 import time
 import sys
 import os
@@ -26,7 +28,11 @@ async def on_ready():
 
 @bot.command()
 async def ping(ctx):
-    await ctx.send("Pong!")
+    import time
+    t0 = time.time()
+    t1 = time.time()
+    delta = t1 - t0
+    await ctx.send(f"Ponged in {t1}ms")
 
 try:
     with open("token.txt") as f:
