@@ -1,5 +1,3 @@
-@bot.event
-@bot.event
 import time
 import sys
 import os
