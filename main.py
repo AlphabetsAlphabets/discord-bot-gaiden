@@ -26,11 +26,11 @@ async def on_ready():
 
 @bot.command()
 async def ping(ctx):
-    import time
     t0 = time.time()
     t1 = time.time()
     delta = t1 - t0
-    await ctx.send(f"Ponged in {t1}ms")
+
+    await ctx.send(f"Ponged in {delta}ms")
 
 try:
     with open("token.txt") as f:
