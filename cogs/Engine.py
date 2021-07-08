@@ -24,10 +24,12 @@ class Engine(commands.Cog):
             desc = result["Text"]
             url = result["FirstURL"]
 
+            name = desc.split("-")[0]
+
             return_result = (
-                f"{desc}\nFor more information checkout the [source]({url})\n"
+                f"{desc}\nFor more information checkout the [source]({url}).\n"
             )
-            embed.add_field(name="===" * 10, value=return_result, inline=False)
+            embed.add_field(name=name, value=return_result, inline=False)
 
         return embed
 
@@ -125,6 +127,7 @@ class Engine(commands.Cog):
                 # can get really long, and this is to avoid filling up the screen
                 # with search results
                 await message.delete()
+                await self.message.delete()
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -148,6 +151,7 @@ class Engine(commands.Cog):
         # Text is the text content that invoked this commands
         text = message.content
 
+        self.message = message
         # The person who invoked the commands
         author = ctx.author.name
         self.search_pages = dict()
