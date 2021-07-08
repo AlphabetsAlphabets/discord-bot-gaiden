@@ -18,7 +18,7 @@ class MessageHandler(commands.Cog):
             # await message.delete()
             text = message.content.split(" ")
             text = text[2:]
-            text = " ".join(text) + "."
+            text = " ".join(text)
 
             channel = message.channel
             await message.delete()
