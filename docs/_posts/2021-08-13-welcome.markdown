@@ -1,0 +1,9 @@
+---
+layout: post
+title:  "Welcome"
+date:   2021-08-13 08:02:30 +0800
+categories: project update
+---
+Welcome. This is my project website, for my discord bot gaiden. Which isn't available to the public. And I don't have any plans to make it public either. But that might change in the future. Although the chances of that happening are very unlikely.
+
+I'm going to write notes on the project, for my own reference. This serves as a way to document the development process of my bot as well.
