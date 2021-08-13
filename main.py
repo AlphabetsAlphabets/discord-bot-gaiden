@@ -12,6 +12,7 @@ from cogs.MessageHandler import MessageHandler
 from cogs.Engine import Engine
 from cogs.FeatureTests import FeatureTests
 from cogs.Music import Music
+from cogs.CustomChannels import CustomChannels
 
 prefix = "<"
 bot = commands.Bot(command_prefix=prefix)
@@ -44,6 +45,7 @@ if __name__ == "__main__":
     bot.add_cog(Engine(bot))
     bot.add_cog(FeatureTests(bot))
     bot.add_cog(Music(bot))
+    bot.add_cog(CustomChannels(bot))
 
     # running the bot
     bot.run(token)
