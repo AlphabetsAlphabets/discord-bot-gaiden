@@ -1,3 +1,5 @@
+import time
+
 import discord
 from discord.ext import commands
 
@@ -5,11 +7,11 @@ class CustomChannels(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._last_member = None
-    
+
     @commands.command(name="room")
     async def room(self, ctx, command, *args):
         args = list(args)
-        commands = ["new", "delete"]
+        commands = ["new", "delete", "invite"]
         if command not in commands:
             string = commands.pop(0)
             for command in commands:
@@ -18,13 +20,15 @@ class CustomChannels(commands.Cog):
             await ctx.reply(f"Valid commands for room are {string}")
             return
 
+        everyone = ctx.author.roles[0]
         if command == "new":
             # TODO
             # Assign create and assign a new role to the person who created this
             # room, and allow that person only to make edits to who can and cannot join.
             make_private = False
             if args[-1].lower() == "true":
-                make_private = bool(args.pop(-1))
+                del args[-1]
+                make_private = True
 
             if args[-1].lower() == "false":
                 make_private = False
@@ -35,7 +39,8 @@ class CustomChannels(commands.Cog):
 
             if make_private:
                 # Make `channel` visible to only users with role `role`
-                pass
+                await channel.set_permissions(everyone, view_channel=False)
+                await channel.set_permissions(role, view_channel=True)
 
         if command == "delete":
             can_delete = False
@@ -55,7 +60,7 @@ class CustomChannels(commands.Cog):
         category = ""
         for category in ctx.guild.categories:
             if category.name == "Rooms":
-                category_name = category
+                category = category
                 break
 
         topic = f"{ctx.author.name} would like to discuss about {name}."
@@ -65,7 +70,10 @@ class CustomChannels(commands.Cog):
     async def make_room_owner(self, ctx, channel):
         owner = ctx.author.name
         reason = channel.topic
-        role = await ctx.guild.create_role(name=f"Room for {owner}", reason=reason)
+
+        perms = discord.Permissions(manage_roles=True)
+
+        role = await ctx.guild.create_role(name=f"Room for {owner}", reason=reason, permissions=perms)
 
         await ctx.author.add_roles(role, reason=reason)
         return role
