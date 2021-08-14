@@ -11,7 +11,7 @@ class CustomChannels(commands.Cog):
     @commands.command(name="room")
     async def room(self, ctx, command, *args):
         args = list(args)
-        commands = ["new", "delete", "invite"]
+        commands = ["new", "delete"]
         if command not in commands:
             string = commands.pop(0)
             for command in commands:
