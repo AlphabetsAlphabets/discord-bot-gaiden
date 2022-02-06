@@ -2,7 +2,7 @@ import time
 import sys
 import os
 
-sys.path.append("./module/")
+sys.path.append("./module/") # Multiple changes
 
 import discord
 from discord.ext import commands
