@@ -12,11 +12,11 @@ class MessageHandler(commands.Cog):
         if message.author == self.bot.user:
             return
 
-        invoke = message.content.lower()
+        message_content = message.content.lower()
 
-        if invoke.startswith("gaiden say"):
+        if message_content.startswith("gaiden say"):
             # await message.delete()
-            text = message.content.split(" ")
+            text = message.message_content.split(" ")
             text = text[2:]
             text = " ".join(text)
 
@@ -25,8 +25,8 @@ class MessageHandler(commands.Cog):
             await channel.send(text)
 
         if self.git:
-            key_word_in_message = ("help" in invoke or "i suck" in invoke)
-            length_of_message = len(invoke)
+            key_word_in_message = ("help" in message_content or "i suck" in invoke)
+            length_of_message = len(message_content)
 
             if key_word_in_message and length_of_message > 50:
                 await message.reply("Lmao git gud")

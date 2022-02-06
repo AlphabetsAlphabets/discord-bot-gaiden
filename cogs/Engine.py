@@ -29,6 +29,7 @@ class Engine(commands.Cog):
             return_result = (
                 f"{desc}\nFor more information checkout the [source]({url}).\n"
             )
+
             embed.add_field(name=name, value=return_result, inline=False)
 
         return embed
